@@ -22,6 +22,7 @@
 
 // mutex
 #include <mutex>
+#include <thread>
 
 using namespace std;
 
@@ -37,6 +38,14 @@ using namespace std;
 #define GEAR_RATIO 49      // TO BE sent from the main node.
 #define PULSES_PER_REV 38  // TO BE sent from the main node.
 
+#include <signal.h>
+// Define the function to be called when ctrl-c (SIGINT) is sent to process
+void signal_callback_handler(int signum) {
+   cout << "Caught signal " << signum << endl;
+   // Terminate program
+   exit(signum);
+}
+
 typedef union FLOAT_UNION_{
     float float_;
     char bytes_[4];   
@@ -47,6 +56,8 @@ public:
     TCPCOMM(mutex* m) 
     : m_(m)
     {
+        signal(SIGINT, signal_callback_handler);
+
         // Initialize socket.
         server_socket_ = socket(PF_INET, SOCK_STREAM, 0);  // PF_INET: IPv4, SOCK_STREAM: TCP/IP. //M
         int socket_option = 1; // SO_REUSEADDR == true. TIME-WAIT refusal.
@@ -79,11 +90,22 @@ public:
         fcntl(server_socket_, F_SETFL, flag | O_NONBLOCK);
     };
 
-    void runThread(){
+
+    std::thread runThread() {
+        return std::thread([=] { process(); });
+    };
+
+    void process(){
+        FLOAT_UNION kp,kd,ki;
+        w_left_desired_.float_  = 0.0f;
+        w_right_desired_.float_ = 0.0f;
+        kp.float_ = 3.5;
+        kd.float_ = 3.5;
+        ki.float_ = 1.0;
 
         while(1){
             // A request is received.
-            client_socket_ = accept(server_socket_, (struct sockaddr*)&client_addr_, (socklen_t*)&client_addr__size);        //client_addr__size = sizeof(client_addr_); // IPv4 or IPv6
+            client_socket_ = accept(server_socket_, (struct sockaddr*)&client_addr_, (socklen_t*)&client_addr_size_); //client_addr__size = sizeof(client_addr_); // IPv4 or IPv6
             if ( -1 == client_socket_) continue;
             printf("  - client_socket: %d\n", client_socket_);
 
@@ -98,55 +120,45 @@ public:
                     // a) Receiving part
                     int len_read = read(client_socket_, buff_rcv_, BUFF_SIZE);
                     if(len_read > 0){ // if there is data,
-                        printf("tcp rcv:%d / \n", len_read);
-
                         // 1. Receive TCP/IP data (from MCU)
                         // 1-1) IMU (three acc, three gyro)
-                        imu_data[0] = decodeIMUBytes(buff_rcv_[0],  buff_rcv_[1]);
-                        imu_data[1] = decodeIMUBytes(buff_rcv_[2],  buff_rcv_[3]);
-                        imu_data[2] = decodeIMUBytes(buff_rcv_[4],  buff_rcv_[5]);
+                        //m_->lock();
+                        this->decodeIMUData(buff_rcv_);
+                        //m_->unlock();
 
-                        imu_data[3] = decodeIMUBytes(buff_rcv_[6],  buff_rcv_[7]);
-                        imu_data[4] = decodeIMUBytes(buff_rcv_[8],  buff_rcv_[9]);
-                        imu_data[5] = decodeIMUBytes(buff_rcv_[10], buff_rcv_[11]);
-
-                        // 1-2) Encoder data (left / right)
-                        data_enc_left_  = buff_rcv_[12];
-                        data_enc_right_ = buff_rcv_[13];
+                        // 1-2) Encoder data (left / right)for(int j = 0; j < 4; ++j) w_left.bytes_[j] = buff_rcv[12+j];
+                        for(int j = 0; j < 4; ++j) w_left_.bytes_[j]  = buff_rcv_[12+j];
+                        for(int j = 0; j < 4; ++j) w_right_.bytes_[j] = buff_rcv_[16+j];
                         
                         // 1-3) Time (two bytes for second, four bytes for microseconds)
-                        time_mcu_ = decodeTime(buff_rcv_[14], buff_rcv_[15], buff_rcv_[16], buff_rcv_[17], buff_rcv_[18], buff_rcv_[19]);
-
-                        // 1-4) State vector (camera trigger, other signals)
-
+                        this->decodeTime(buff_rcv_[20], buff_rcv_[21], buff_rcv_[22], buff_rcv_[23], buff_rcv_[24], buff_rcv_[25]);
 
                         // difference of time from the current to the previous.
-                        dtime = time_curr-time_prev;
-                        printf("enc l/r: %d, %d", encoder_left, encoder_right);
-
-                        double w_left = (double)encoder_left * pulses_to_rev / (0.05);
-                        printf("/ time: %0.6lf [s] / dt: %0.3lf [ms] / freq: %0.3lf [Hz] ", time_curr, dtime*1000, 1.0/dtime);
+                        double dtime = time_mcu_-time_mcu_prev_;
+                        printf("/ time: %0.6lf [s] / dt: %0.3lf [ms] / freq: %0.3lf [Hz] ", time_mcu_, dtime*1000, 1.0/dtime);
                         
-                        for(int j = 0; j < 6; ++j) printf("%d ",imu_data[j]);
+                        // 1-4) State vector (camera trigger, other signals)
+
+                        // Visualize
+                        for(int j = 0; j < 6; ++j) printf("%d ", data_imu_[j]);
                         printf("\n");
 
-                        printf("w_d : %0.3lf / w_left: %0.3lf   ", w_desired.float_, w_left);
+                        printf("wl_d : %0.3lf / wl: %0.3lf   ", w_left_desired_.float_, w_left_.float_);
 
                         // 2. Send TCP/IP data (to MCU)
                         // sprintf(buff_snd_, "%d : %s", len_read, buff_rcv_);
-                        for(int j = 0; j < 4; ++j) buff_snd_[j]    = w_desired.bytes_[j];
+                        for(int j = 0; j < 4; ++j) buff_snd_[j]    = w_left_desired_.bytes_[j];
                         for(int j = 0; j < 4; ++j) buff_snd_[j+4]  = kp.bytes_[j];
                         for(int j = 0; j < 4; ++j) buff_snd_[j+8]  = kd.bytes_[j];
                         for(int j = 0; j < 4; ++j) buff_snd_[j+12] = ki.bytes_[j];
                         write(client_socket_, buff_snd_, 16 + 1); // +1 means "NULL". 
                         
-                        time_prev = time_curr; 
+                        time_mcu_prev_ = time_mcu_; 
                     } 
                     else if(len_read == 0) { // EOF (0) means connection is end.
                         printf("  - EOF is detected.\n");
                         break;
                     }
-
                     // b) Sending part (from the sending queue)
                 }
 
@@ -158,25 +170,50 @@ public:
     };
 
 
+    void setWLeftDesired(float w_d) {
+        m_->lock();
+        w_left_desired_.float_ = w_d;
+        m_->unlock();
+    };
+
+    void getAngularVelocities(float& wl, float& wr){
+        m_->lock();
+        wl = w_left_.float_;
+        wr = w_right_.float_;
+        m_->unlock();
+    };
+
+
 private:
-    inline short decodeIMUBytes(char h_byte, char l_byte){
+    inline short decode2BytesToShort(char h_byte, char l_byte){
         return (short) ( (unsigned char)h_byte << 8 | (unsigned char)l_byte);
     };
 
-    inline double decodeTime(char sec_l, char sec_h, char usec0, char usec1, char usec2, char usec3){
+    void decodeTime(char sec_l, char sec_h, char usec0, char usec1, char usec2, char usec3){
         unsigned short sec 
             = (unsigned short) ( (unsigned char)sec_h << 8 | (unsigned char)sec_l);
         unsigned int usec  
             = (unsigned int)   ( (unsigned char)usec3 << 24 | (unsigned char)usec2 << 16 | (unsigned char)usec1 << 8 | (unsigned char)usec0 );
-        return (double)sec + (double)usec/1000000.0;
+        time_mcu_ = (double)sec + (double)usec/1000000.0;
     };
+
+    inline short decodeIMUData(char* buff){
+        data_imu_[0] = decode2BytesToShort(buff[0],  buff[1]);
+        data_imu_[1] = decode2BytesToShort(buff[2],  buff[3]);
+        data_imu_[2] = decode2BytesToShort(buff[4],  buff[5]);
+
+        data_imu_[3] = decode2BytesToShort(buff[6],  buff[7]);
+        data_imu_[4] = decode2BytesToShort(buff[8],  buff[9]);
+        data_imu_[5] = decode2BytesToShort(buff[10], buff[11]);
+    };
+
 
 private:
 
     // Socket structs
     int server_socket_;
     int client_socket_;
-    int client_addr__size_;
+    int client_addr_size_;
 
     struct sockaddr_in server_addr_;
     struct sockaddr_in client_addr_;
@@ -187,13 +224,18 @@ private:
 
     // Data from the MCU
     double time_mcu_; 
-    float  data_imu_[6];
-    float  data_angle_vel_left_;
-    float  data_angle_vel_right_;
+    double time_mcu_prev_; 
+    short  data_imu_[6];
+    FLOAT_UNION w_left_;
+    FLOAT_UNION w_right_;
+
+    FLOAT_UNION w_left_desired_;
+    FLOAT_UNION w_right_desired_;
 
     // Data to the MCU
 
-    std::mutex* m_; // pointer to the main mutex
+    // Pointer to the main mutex
+    std::mutex* m_; 
 
 };
 
