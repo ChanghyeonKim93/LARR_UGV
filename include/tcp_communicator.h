@@ -99,9 +99,9 @@ public:
         FLOAT_UNION kp,kd,ki;
         w_left_desired_.float_  = 0.0f;
         w_right_desired_.float_ = 0.0f;
-        kp.float_ = 2.5;//1.5;
-        kd.float_ = 10.0;//10.5;
-        ki.float_ = 0.3;//0.8;
+        kp.float_ = 5.5;//1.5;
+        kd.float_ = 15.0;//10.5;
+        ki.float_ = 0.0;//0.8;
 
         while(1){
             // A request is received.
