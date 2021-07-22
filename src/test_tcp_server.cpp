@@ -58,8 +58,10 @@ int main(int argc, char **argv) {
     // ROS publish
     std_msgs::Float32 wd_msg;
     std_msgs::Float32 w_msg;
+    std_msgs::Float32 we_msg;
     ros::Publisher wd_pub = nh.advertise<std_msgs::Float32>("w_desired", 1);
     ros::Publisher w_pub  = nh.advertise<std_msgs::Float32>("w", 1);
+    ros::Publisher we_pub  = nh.advertise<std_msgs::Float32>("w_est", 1);
   
   
     // run multi-threads
@@ -100,9 +102,11 @@ int main(int argc, char **argv) {
 
         w_msg.data  = wl;
         wd_msg.data = w_d;
-        
+        we_msg.data = wr;
+
         w_pub.publish(w_msg);
         wd_pub.publish(wd_msg);
+        we_pub.publish(we_msg);
     }
 
     // delete

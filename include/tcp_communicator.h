@@ -99,9 +99,11 @@ public:
         FLOAT_UNION kp,kd,ki;
         w_left_desired_.float_  = 0.0f;
         w_right_desired_.float_ = 0.0f;
-        kp.float_ = 5.5;//1.5;
-        kd.float_ = 15.0;//10.5;
+        kp.float_ = 0.9;//1.5;
+        kd.float_ = 0.07;//10.5;
         ki.float_ = 0.0;//0.8;
+        // 20210723 p d i: 1.3, 0.1, 0.0 for 20 Hz control loop.
+        // 20210723 p d i: 0.9 0.07 0.0 for 100 Hz control loop.
 
         while(1){
             // A request is received.
@@ -143,7 +145,7 @@ public:
                         for(int j = 0; j < 6; ++j) printf("%d ", data_imu_[j]);
                         printf("\n");
 
-                        printf("wl_d : %0.3lf / wl: %0.3lf   ", w_left_desired_.float_, w_left_.float_);
+                        printf("wl_d : %0.3lf / wl: %0.3lf , w_est: %0.3lf   ", w_left_desired_.float_, w_left_.float_, w_right_.float_);
 
                         // 2. Send TCP/IP data (to MCU)
                         // sprintf(buff_snd_, "%d : %s", len_read, buff_rcv_);

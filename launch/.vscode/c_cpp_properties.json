@@ -1,0 +1,38 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "",
+        "limitSymbolsToIncludedHeaders": true
+      },
+      "includePath": [
+        "/home/larrkchlaptop/catkin_ws/devel/include/**",
+        "/opt/ros/kinetic/include/**",
+        "/home/larrkchlaptop/catkin_ws/src/AutoL2LCalib_local/include/**",
+        "/home/larrkchlaptop/catkin_ws/src/bluecougar_x_ros/include/**",
+        "/home/larrkchlaptop/catkin_ws/src/bluefox_ros/include/**",
+        "/home/larrkchlaptop/catkin_ws/src/camlidar_logger/include/**",
+        "/home/larrkchlaptop/catkin_ws/src/camlidar_module/include/**",
+        "/home/larrkchlaptop/catkin_ws/src/epvo_ros/include/**",
+        "/home/larrkchlaptop/catkin_ws/src/lidar_visual_reconstructor/include/**",
+        "/home/larrkchlaptop/catkin_ws/src/HHI_autoexcavator/include/**",
+        "/home/larrkchlaptop/catkin_ws/src/improved_topic_logger/include/**",
+        "/home/larrkchlaptop/catkin_ws/src/LARR_UGV/include/**",
+        "/home/larrkchlaptop/catkin_ws/src/ocams_1cgn/include/**",
+        "/home/larrkchlaptop/catkin_ws/src/ocams_mono/include/**",
+        "/home/larrkchlaptop/catkin_ws/src/ouster_example/ouster_client/include/**",
+        "/home/larrkchlaptop/catkin_ws/src/ouster_example/ouster_ros/include/**",
+        "/home/larrkchlaptop/catkin_ws/src/ouster_example/ouster_viz/include/**",
+        "/home/larrkchlaptop/catkin_ws/src/ros_tcpip_comm/include/**",
+        "/home/larrkchlaptop/catkin_ws/src/topic_logger/include/**",
+        "/home/larrkchlaptop/catkin_ws/src/tutorial_rosardu_customtopic/include/**",
+        "/home/larrkchlaptop/catkin_ws/src/velodyne/velodyne_driver/include/**",
+        "/home/larrkchlaptop/catkin_ws/src/velodyne/velodyne_laserscan/include/**",
+        "/home/larrkchlaptop/catkin_ws/src/velodyne/velodyne_pcl/include/**",
+        "/home/larrkchlaptop/catkin_ws/src/velodyne/velodyne_pointcloud/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS"
+    }
+  ]
+}
