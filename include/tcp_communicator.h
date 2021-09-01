@@ -145,7 +145,7 @@ public:
                         for(int j = 0; j < 6; ++j) printf("%d ", data_imu_[j]);
                         printf("\n");
 
-                        printf("wl_d : %0.3lf / wl: %0.3lf , w_est: %0.3lf   ", w_left_desired_.float_, w_left_.float_, w_right_.float_);
+                        printf("w_d : %0.3lf / wl: %0.3lf , wr: %0.3lf   ", w_left_desired_.float_, w_left_.float_, w_right_.float_);
 
                         // 2. Send TCP/IP data (to MCU)
                         // sprintf(buff_snd_, "%d : %s", len_read, buff_rcv_);
