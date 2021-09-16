@@ -46,6 +46,12 @@ void signal_callback_handler(int signum) {
    exit(signum);
 }
 
+typedef union USHORT_UNION_{
+    uint16_t ushort_;
+    uint8_t bytes_[2];
+} USHORT_UNION;
+
+
 typedef union FLOAT_UNION_{
     float float_;
     char bytes_[4];   
@@ -141,18 +147,24 @@ public:
                         
                         // 1-4) State vector (camera trigger, other signals)
 
+                        // 1-5) Sonar distances
+                        this->decodeSonarData(buff_rcv_);
+
                         // Visualize
                         for(int j = 0; j < 6; ++j) printf("%d ", data_imu_[j]);
-                        printf("\n");
-
+                        printf(" / sonar: " );
+                        for(int j = 0; j < 3; ++j) printf("%d ", sonar_dist[j]);
+                        printf(" / wheel: ");
                         printf("w_d : %0.3lf / wl: %0.3lf , wr: %0.3lf   ", w_left_desired_.float_, w_left_.float_, w_right_.float_);
-
+                        printf("\n");
                         // 2. Send TCP/IP data (to MCU)
                         // sprintf(buff_snd_, "%d : %s", len_read, buff_rcv_);
                         for(int j = 0; j < 4; ++j) buff_snd_[j]    = w_left_desired_.bytes_[j];
                         for(int j = 0; j < 4; ++j) buff_snd_[j+4]  = kp.bytes_[j];
                         for(int j = 0; j < 4; ++j) buff_snd_[j+8]  = kd.bytes_[j];
                         for(int j = 0; j < 4; ++j) buff_snd_[j+12] = ki.bytes_[j];
+
+
                         write(client_socket_, buff_snd_, 16 + 1); // +1 means "NULL". 
                         
                         time_mcu_prev_ = time_mcu_; 
@@ -199,7 +211,7 @@ private:
         time_mcu_ = (double)sec + (double)usec/1000000.0;
     };
 
-    inline short decodeIMUData(char* buff){
+    inline void decodeIMUData(char* buff){
         data_imu_[0] = decode2BytesToShort(buff[0],  buff[1]);
         data_imu_[1] = decode2BytesToShort(buff[2],  buff[3]);
         data_imu_[2] = decode2BytesToShort(buff[4],  buff[5]);
@@ -207,6 +219,12 @@ private:
         data_imu_[3] = decode2BytesToShort(buff[6],  buff[7]);
         data_imu_[4] = decode2BytesToShort(buff[8],  buff[9]);
         data_imu_[5] = decode2BytesToShort(buff[10], buff[11]);
+    };
+
+    inline void decodeSonarData(char* buff){
+        sonar_dist[0] = decode2BytesToShort(buff[27],buff[28]);
+        sonar_dist[1] = decode2BytesToShort(buff[29],buff[30]);
+        sonar_dist[2] = decode2BytesToShort(buff[31],buff[32]);
     };
 
 
@@ -233,6 +251,8 @@ private:
 
     FLOAT_UNION w_left_desired_;
     FLOAT_UNION w_right_desired_;
+
+    unsigned short sonar_dist[3];
 
     // Data to the MCU
 
