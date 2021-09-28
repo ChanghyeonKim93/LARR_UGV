@@ -50,28 +50,16 @@ int main(int argc, char **argv) {
     // run multi-threads
     std::mutex* mut = new std::mutex();
 
-    TCPCOMM tcp_comm = TCPCOMM(mut);
+    TCPCOMM tcp_comm = TCPCOMM(mut,nh);
 
-    std::thread t1 = tcp_comm.runThread();
+    std::thread t1 = tcp_comm.runThreadROS();
 
-    ros::Subscriber sub_wd = nh.subscribe<std_msgs::Float32MultiArray>("/w_desired",1,boost::bind(callbackDesiredAngularVelocities,_1,boost::ref(tcp_comm)));
+    ros::Subscriber sub_wd = nh.subscribe<std_msgs::Float32MultiArray>("/ugv/wheel_desired",1,boost::bind(callbackDesiredAngularVelocities,_1,boost::ref(tcp_comm)));
     
     float wl, wr;
 
-    while(ros::ok())
-    {
+    while(ros::ok()) {
         ros::spinOnce();
-        
-        tcp_comm.getAngularVelocityLeft(wl); 
-        tcp_comm.getAngularVelocityRight(wr); 
-
-        //w_msg.data  = wl;
-        //wd_msg.data = w_d;
-        //we_msg.data = wr;
-//
-        //w_pub.publish(w_msg);
-        //wd_pub.publish(wd_msg);
-        //we_pub.publish(we_msg);
     }
 
     // delete

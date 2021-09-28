@@ -24,6 +24,11 @@
 #include <mutex>
 #include <thread>
 
+#include <ros/ros.h>
+#include <std_msgs/Float32MultiArray.h>
+#include <sensor_msgs/Imu.h>
+#include <sensor_msgs/Range.h>
+
 using namespace std;
 
 // TCP/IP buffer size
@@ -96,9 +101,61 @@ public:
         fcntl(server_socket_, F_SETFL, flag | O_NONBLOCK);
     };
 
+    TCPCOMM(mutex* m, ros::NodeHandle nh) 
+    : m_(m), nh_(nh)
+    {
+        signal(SIGINT, signal_callback_handler);
+
+        // Initialize socket.
+        server_socket_ = socket(PF_INET, SOCK_STREAM, 0);  // PF_INET: IPv4, SOCK_STREAM: TCP/IP. //M
+        int socket_option = 1; // SO_REUSEADDR == true. TIME-WAIT refusal.
+        setsockopt(server_socket_, SOL_SOCKET, SO_REUSEADDR, &socket_option, sizeof(socket_option));
+
+        if( -1 == server_socket_){
+            cout << "Generation of a server socket fails...\n";
+            exit(1);
+        } else cout << "Server socket is generated!\n";
+    
+        memset(&server_addr_, 0, sizeof(server_addr_));
+        server_addr_.sin_family      = AF_INET;
+        server_addr_.sin_port        = htons(PORT_NUMBER); // port number . 
+        server_addr_.sin_addr.s_addr = htonl(INADDR_ANY);
+        
+        if(-1 == bind(server_socket_, (struct sockaddr*)&server_addr_, sizeof(server_addr_))){
+            printf("   ERROR: Fail to bind!\n");
+            exit(1);
+        } else printf("BIND:   OK\n");
+
+        if(-1 == listen(server_socket_, 5)){ // What is the meaning of '5' ? 
+            // listen is failed. no request.
+            printf("   ERROR: Fail to listen!\n");
+            exit(1);
+        } 
+        else printf("LISTEN: OK\n");
+        
+        // Set non-block server
+        int flag = fcntl(server_socket_, F_GETFL, 0);
+        fcntl(server_socket_, F_SETFL, flag | O_NONBLOCK);
+
+        // ROS
+        msg_wheel_encoders_.data.push_back(0);
+        msg_wheel_encoders_.data.push_back(0);
+        msgs_sonars_.push_back(sensor_msgs::Range());
+        msgs_sonars_.push_back(sensor_msgs::Range());
+        msgs_sonars_.push_back(sensor_msgs::Range());
+        this->pub_wheel_encoders_ = nh_.advertise<std_msgs::Float32MultiArray>("/ugv/wheel_current", 1);
+        this->pub_imu_            = nh_.advertise<sensor_msgs::Imu>("/ugv/imu", 1);
+        this->pubs_sonars_.push_back(nh_.advertise<sensor_msgs::Range>("/ugv/sonar0", 1));
+        this->pubs_sonars_.push_back(nh_.advertise<sensor_msgs::Range>("/ugv/sonar1", 1));
+        this->pubs_sonars_.push_back(nh_.advertise<sensor_msgs::Range>("/ugv/sonar2", 1));
+
+    };
 
     std::thread runThread() {
         return std::thread([=] { process(); });
+    };
+    std::thread runThreadROS() {
+        return std::thread([=] { processROS(); });
     };
 
     void process(){
@@ -160,6 +217,107 @@ public:
                         for(int j = 0; j < 3; ++j) printf("%d ", sonar_dist[j]);
 
                         printf("\n");
+
+                        // 2. Send TCP/IP data (to MCU)
+                        // sprintf(buff_snd_, "%d : %s", len_read, buff_rcv_);
+                        for(int j = 0; j < 4; ++j) buff_snd_[j]    = w_left_desired_.bytes_[j];
+                        for(int j = 0; j < 4; ++j) buff_snd_[j+4]  = w_right_desired_.bytes_[j];
+                        for(int j = 0; j < 4; ++j) buff_snd_[j+8]  = kp.bytes_[j];
+                        for(int j = 0; j < 4; ++j) buff_snd_[j+12] = kd.bytes_[j];
+                        for(int j = 0; j < 4; ++j) buff_snd_[j+16] = ki.bytes_[j];
+
+
+                        write(client_socket_, buff_snd_, 20 + 1); // +1 means "NULL". 
+                        
+                        time_mcu_prev_ = time_mcu_; 
+                    } 
+                    else if(len_read == 0) { // EOF (0) means connection is end.
+                        printf("  - EOF is detected.\n");
+                        break;
+                    }
+                    // b) Sending part (from the sending queue)
+                }
+
+                // Terminate connection.
+                printf("   Connection between [%s] is terminated. The socket is closed.\n",client_ip);
+                close(client_socket_);            
+            }
+        } // end WHILE
+    };
+
+    void processROS(){
+        FLOAT_UNION kp,kd,ki;
+        w_left_desired_.float_  = 0.0f;
+        w_right_desired_.float_ = 0.0f;
+        kp.float_ = 1.1;//1.5;
+        kd.float_ = 0.07;//10.5;
+        ki.float_ = 0.0;//0.8;
+        // 20210723 p d i: 1.3, 0.1, 0.0 for 20 Hz control loop.
+        // 20210723 p d i: 0.9 0.07 0.0 for 100 Hz control loop.
+
+        while(1){
+            // A request is received.
+            client_socket_ = accept(server_socket_, (struct sockaddr*)&client_addr_, (socklen_t*)&client_addr_size_); //client_addr__size = sizeof(client_addr_); // IPv4 or IPv6
+            if ( -1 == client_socket_) continue;
+            printf("  - client_socket: %d\n", client_socket_);
+
+            char client_ip[INET_ADDRSTRLEN+1];
+            printf("  - Requsting client IP:  [%s]\n", inet_ntop(AF_INET, (const void*)&client_addr_.sin_addr, client_ip, INET_ADDRSTRLEN+1));
+
+            if(-1 == client_socket_) printf("  - connection is not accepted.\n");
+            else 
+            {
+                printf("  - Connection request of [%s] is accepted!\n", client_ip);
+                while(1){ // While loop for a client...
+                    // a) Receiving part
+                    int len_read = read(client_socket_, buff_rcv_, BUFF_SIZE);
+                    if(len_read > 0){ // if there is data,
+                        // 1. Receive TCP/IP data (from MCU)
+                        // 1-1) IMU (three acc, three gyro)
+                        //m_->lock();
+                        this->decodeIMUData(buff_rcv_);
+                        //m_->unlock();
+
+                        // 1-2) Encoder data (left / right)for(int j = 0; j < 4; ++j) w_left.bytes_[j] = buff_rcv[12+j];
+                        for(int j = 0; j < 4; ++j) w_left_.bytes_[j]  = buff_rcv_[12+j];
+                        for(int j = 0; j < 4; ++j) w_right_.bytes_[j] = buff_rcv_[16+j];
+                        
+                        // 1-3) Time (two bytes for second, four bytes for microseconds)
+                        this->decodeTime(buff_rcv_[20], buff_rcv_[21], buff_rcv_[22], buff_rcv_[23], buff_rcv_[24], buff_rcv_[25]);
+
+                        // difference of time from the current to the previous.
+                        double dtime = time_mcu_-time_mcu_prev_;
+                        
+                        // 1-4) State vector (camera trigger, other signals)
+
+                        // 1-5) Sonar distances
+                        this->decodeSonarData(buff_rcv_);
+
+
+                        // publishers
+                        msg_wheel_encoders_.data[0] = w_left_.float_;
+                        msg_wheel_encoders_.data[1] = w_right_.float_;
+
+                        msg_imu_.angular_velocity.x    = data_imu_[0];
+                        msg_imu_.angular_velocity.y    = data_imu_[1];
+                        msg_imu_.angular_velocity.z    = data_imu_[2];
+                        msg_imu_.linear_acceleration.x = data_imu_[3];
+                        msg_imu_.linear_acceleration.y = data_imu_[4];
+                        msg_imu_.linear_acceleration.z = data_imu_[5];
+
+                        for(int j = 0; j < 3; ++j) {
+                            msgs_sonars_[j].range = (float)sonar_dist[j]/100.0;
+                            msgs_sonars_[j].min_range = 0.01;
+                            msgs_sonars_[j].max_range = 0.60;
+                            msgs_sonars_[j].radiation_type = msgs_sonars_[j].ULTRASOUND;
+                            msgs_sonars_[j].field_of_view = 15.0*3.141592/180.0;
+                        }
+
+                        for(int j = 0; j < 3; ++j)
+                            pubs_sonars_[j].publish(msgs_sonars_[j]);
+
+                        pub_wheel_encoders_.publish(msg_wheel_encoders_);
+                        pub_imu_.publish(msg_imu_);
 
                         // 2. Send TCP/IP data (to MCU)
                         // sprintf(buff_snd_, "%d : %s", len_read, buff_rcv_);
@@ -288,6 +446,17 @@ private:
     // Pointer to the main mutex
     std::mutex* m_; 
 
+
+    // ROS related
+    ros::NodeHandle nh_;
+
+    std_msgs::Float32MultiArray msg_wheel_encoders_;
+    sensor_msgs::Imu msg_imu_;
+    std::vector<sensor_msgs::Range> msgs_sonars_;
+
+    ros::Publisher pub_wheel_encoders_;
+    ros::Publisher pub_imu_;
+    std::vector<ros::Publisher> pubs_sonars_;
 };
 
 #endif

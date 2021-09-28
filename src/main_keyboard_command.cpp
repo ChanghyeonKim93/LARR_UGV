@@ -39,7 +39,7 @@ int main(int argc, char **argv) {
     ss << "\n |\n L\n";
 
     // ROS publish
-    ros::Publisher wd_pub = nh.advertise<std_msgs::Float32MultiArray>("/w_desired", 1);  
+    ros::Publisher wd_pub = nh.advertise<std_msgs::Float32MultiArray>("/ugv/wheel_desired", 1);  
   
     float wl_d = 0.0f;
     float wr_d = 0.0f;

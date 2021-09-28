@@ -7,6 +7,7 @@
         "array": "cpp",
         "string": "cpp",
         "mutex": "cpp",
-        "sstream": "cpp"
+        "sstream": "cpp",
+        "iostream": "cpp"
     }
 }
