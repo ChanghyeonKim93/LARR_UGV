@@ -5,6 +5,8 @@
     ],
     "files.associations": {
         "array": "cpp",
-        "string": "cpp"
+        "string": "cpp",
+        "mutex": "cpp",
+        "sstream": "cpp"
     }
 }

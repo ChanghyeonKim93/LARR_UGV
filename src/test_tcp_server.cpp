@@ -10,22 +10,10 @@
 // keyboard input tool
 #include "keyinput.h"
 #include "tcp_communicator.h"
+#include "tools.h"
 
 // ROS
 #include <std_msgs/Float32.h>
-
-// Get current data/time, format is yyyy-mm-dd.hh:mm:ss
-const std::string currentDateTime(){
-    time_t now = time(0);
-    struct tm tstruct;
-    char buf[80];
-    tstruct = *localtime(&now);
-    // Visit http://en.cppreference.com/w/cpp/chrono/c/strftime
-    // for more information about data/time format
-    strftime(buf, sizeof(buf), "%Y-%m-%d_%H_%M_%S", &tstruct);
-
-    return buf;
-}
 
 using namespace std;
 
@@ -70,9 +58,7 @@ int main(int argc, char **argv) {
     TCPCOMM* tcp_comm = new TCPCOMM(mut);
 
 
-
     std::thread t1 = tcp_comm->runThread();
-    //std::thread t2 = velocity_estimator.runThread(&communicator);
 
     int cnt = 0;
     float w_d = 0.0f;
@@ -84,21 +70,25 @@ int main(int argc, char **argv) {
         
         if(c == 'w')
 	    {
-            w_d += 0.05;
+            w_d += 0.025;
             if(w_d > 2.4) w_d = 2.4;
-            tcp_comm->setWLeftDesired(w_d); 
+            tcp_comm->setDesiredAngularVelocityLeft(w_d); 
+            tcp_comm->setDesiredAngularVelocityRight(w_d); 
+
             cout << user_manual;         
         }
         else if(c == 's')
 	    {           
-            w_d -= 0.05;
+            w_d -= 0.025;
             if(w_d < -2.4) w_d = -2.4;
-            tcp_comm->setWLeftDesired(w_d); 
+            tcp_comm->setDesiredAngularVelocityLeft(w_d); 
+            tcp_comm->setDesiredAngularVelocityRight(w_d); 
             cout << user_manual;         
         }
         else if(c == 'q') break;
 
-        tcp_comm->getAngularVelocities(wl, wr);
+        tcp_comm->getAngularVelocityLeft(wl);
+        tcp_comm->getAngularVelocityRight(wr);
 
         w_msg.data  = wl;
         wd_msg.data = w_d;

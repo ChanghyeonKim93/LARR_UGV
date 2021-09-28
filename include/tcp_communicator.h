@@ -105,7 +105,7 @@ public:
         FLOAT_UNION kp,kd,ki;
         w_left_desired_.float_  = 0.0f;
         w_right_desired_.float_ = 0.0f;
-        kp.float_ = 0.9;//1.5;
+        kp.float_ = 1.1;//1.5;
         kd.float_ = 0.07;//10.5;
         ki.float_ = 0.0;//0.8;
         // 20210723 p d i: 1.3, 0.1, 0.0 for 20 Hz control loop.
@@ -152,20 +152,25 @@ public:
 
                         // Visualize
                         for(int j = 0; j < 6; ++j) printf("%d ", data_imu_[j]);
+
+                        printf(" / wheel: ");
+                        printf("wl_d : %0.3lf, wr_d : %0.3lf / wl: %0.3lf , wr: %0.3lf   ", w_left_desired_.float_, w_right_desired_.float_, w_left_.float_, w_right_.float_);
+                        
                         printf(" / sonar: " );
                         for(int j = 0; j < 3; ++j) printf("%d ", sonar_dist[j]);
-                        printf(" / wheel: ");
-                        printf("w_d : %0.3lf / wl: %0.3lf , wr: %0.3lf   ", w_left_desired_.float_, w_left_.float_, w_right_.float_);
+
                         printf("\n");
+
                         // 2. Send TCP/IP data (to MCU)
                         // sprintf(buff_snd_, "%d : %s", len_read, buff_rcv_);
                         for(int j = 0; j < 4; ++j) buff_snd_[j]    = w_left_desired_.bytes_[j];
-                        for(int j = 0; j < 4; ++j) buff_snd_[j+4]  = kp.bytes_[j];
-                        for(int j = 0; j < 4; ++j) buff_snd_[j+8]  = kd.bytes_[j];
-                        for(int j = 0; j < 4; ++j) buff_snd_[j+12] = ki.bytes_[j];
+                        for(int j = 0; j < 4; ++j) buff_snd_[j+4]  = w_right_desired_.bytes_[j];
+                        for(int j = 0; j < 4; ++j) buff_snd_[j+8]  = kp.bytes_[j];
+                        for(int j = 0; j < 4; ++j) buff_snd_[j+12] = kd.bytes_[j];
+                        for(int j = 0; j < 4; ++j) buff_snd_[j+16] = ki.bytes_[j];
 
 
-                        write(client_socket_, buff_snd_, 16 + 1); // +1 means "NULL". 
+                        write(client_socket_, buff_snd_, 20 + 1); // +1 means "NULL". 
                         
                         time_mcu_prev_ = time_mcu_; 
                     } 
@@ -184,9 +189,33 @@ public:
     };
 
 
-    void setWLeftDesired(float w_d) {
+    void setDesiredAngularVelocityLeft(float w_d) {
         m_->lock();
         w_left_desired_.float_ = w_d;
+        m_->unlock();
+    };
+    void setDesiredAngularVelocityRight(float w_d) {
+        m_->lock();
+        w_right_desired_.float_ = w_d;
+        m_->unlock();
+    };
+
+    void setDesiredAngularVelocities(float wl_d,float wr_d) {
+        m_->lock();
+        w_left_desired_.float_ = wl_d;
+        w_right_desired_.float_ = wr_d;
+        m_->unlock();
+    };
+
+    void getAngularVelocityLeft(float& wl){
+        m_->lock();
+        wl = w_left_.float_;
+        m_->unlock();
+    };
+
+    void getAngularVelocityRight(float& wr){
+        m_->lock();
+        wr = w_right_.float_;
         m_->unlock();
     };
 
@@ -222,9 +251,9 @@ private:
     };
 
     inline void decodeSonarData(char* buff){
-        sonar_dist[0] = decode2BytesToShort(buff[27],buff[28]);
-        sonar_dist[1] = decode2BytesToShort(buff[29],buff[30]);
-        sonar_dist[2] = decode2BytesToShort(buff[31],buff[32]);
+        sonar_dist[0] = decode2BytesToShort(buff[27],buff[28])/256;
+        sonar_dist[1] = decode2BytesToShort(buff[29],buff[30])/256;
+        sonar_dist[2] = decode2BytesToShort(buff[31],buff[32])/256;
     };
 
 
