@@ -1,0 +1,60 @@
+// Basics installation
+sudo apt-get update
+sudo apt-get upgrade
+sudo apt-get install terminator
+sudo apt-get install git
+
+
+// ROS installation
+sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
+sudo apt-key adv --keyserver 'hkp://keyserver.ubuntu.com:80' --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
+sudo apt update
+sudo apt-get install ros-melodic-desktop-full
+sudo apt-get install ros-melodic-rosserial*
+
+
+// ROS debkits installation
+sudo apt-get install python-pip
+sudo pip install -U rosdep
+sudo rosdep init
+rosdep update
+
+
+// ROS source setup.bash
+echo "source /opt/ros/melodic/setup.bash" >> ~/.bashrc
+source ~/.bashrc
+
+sudo apt-get install python-rosinstall python-rosinstall-generator python-wstool build-essential
+
+
+// Configure alias in ~/.bashrc
+gedit ~/.bashrc
+alias cm='cd ~/catkin_ws && catkin_make && source devel/setup.bash'
+alias sb='source ~/.bashrc && source devel/setup.bash'
+alias eb='gedit ~/.bashrc'
+
+
+// Initialize workspace
+mkdir -p ~/catkin_ws/src
+catkin_init_workspace
+
+
+// Clone git : LARR_UGV, ydlidar_ros, realsense_ros
+- YDLiDAR installation   : see the 'external/lidar_setting'
+- Realsense installation : see the 'external/rgbd_setting'
+
+
+// Download and install vscode
+link: https://code.visualstudio.com/docs/?dv=linux64_deb
+intellisense 
+cpp
+ROS
+arduino
+
+// Download and install arduino-linux
+link: https://www.arduino.cc/en/software
+
+// Download and install Logic
+link: https://www.saleae.com/downloads/
+link for Logic 1: https://support.saleae.com/logic-software/legacy-software/older-software-releases#logic-1-x-download-links
+
