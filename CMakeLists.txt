@@ -13,8 +13,14 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 catkin_package(
-DEPENDS Eigen
+  DEPENDS Eigen
   CATKIN_DEPENDS roscpp
+)
+
+LIST(APPEND LINK_LIBS
+  ${catkin_LIBRARIES} 
+  ${OpenCV_LIBRARIES} 
+  ${Eigen_LIBRARIES}  
 )
 
 set(includeDirs ${includeDirs} ${CMAKE_CURRENT_BINARY_DIR})
@@ -31,13 +37,13 @@ set(DCMAKE_build_type debug)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -pg -O2 -m64 -Ofast -flto -msse3 -march=native -mfpmath=sse")
 
 add_executable (test_tcp_server src/test_tcp_server.cpp)
-target_link_libraries (test_tcp_server ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${Eigen_LIBRARIES})
+target_link_libraries (test_tcp_server ${LINK_LIBS})
 
 add_executable (tcp_server src/main_tcp_server.cpp)
-target_link_libraries (tcp_server ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${Eigen_LIBRARIES})
+target_link_libraries (tcp_server ${LINK_LIBS})
 
 add_executable (keyboard_command src/main_keyboard_command.cpp)
-target_link_libraries (keyboard_command ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${Eigen_LIBRARIES})
+target_link_libraries (keyboard_command ${LINK_LIBS})
 
 #add_executable (tcpip_client ${SRC_client})
 #target_link_libraries (tcpip_client ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${Eigen_LIBRARIES})

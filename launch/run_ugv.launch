@@ -4,8 +4,10 @@
   <arg name="frame_id_left"  default="left/2dlidar"/>
   <arg name="frame_id_right" default="right/2dlidar"/>
 
+<!--node type="rviz" name="rviz" pkg="rviz" args="-d $(find larr_ugv)/rviz_larrugv.rviz" /-->
+
 <group ns="larr_ugv">
-  <node pkg="larr_ugv" type="test_tcp_server" name="test_tcp_server" output="screen">
+  <node pkg="larr_ugv" type="tcp_server" name="tcp_server" output="screen">
   
   </node>
        
@@ -29,6 +31,7 @@
     <param name="frame_id_left"  type="string" value="$(arg frame_id_left)"/>
     <param name="frame_id_right" type="string" value="$(arg frame_id_right)"/>
   </node>
+
   <node name="ydlidar_node_larrugv2"  pkg="ydlidar_ros"  type="ydlidar_node_larrugv" output="screen" respawn="false" >
     <param name="port"         type="string" value="/dev/ttyUSB1"/>  
     <param name="baudrate"     type="int" value="230400"/>  

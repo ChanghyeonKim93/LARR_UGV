@@ -29,6 +29,9 @@
 #include <sensor_msgs/Imu.h>
 #include <sensor_msgs/Range.h>
 
+#include "datatype.h"
+
+
 using namespace std;
 
 // TCP/IP buffer size
@@ -51,103 +54,30 @@ void signal_callback_handler(int signum) {
    exit(signum);
 }
 
-typedef union USHORT_UNION_{
-    uint16_t ushort_;
-    uint8_t bytes_[2];
-} USHORT_UNION;
-
-
-typedef union FLOAT_UNION_{
-    float float_;
-    char bytes_[4];   
-} FLOAT_UNION;
-
 class TCPCOMM{
 public:
     TCPCOMM(mutex* m) 
     : m_(m)
     {
-        signal(SIGINT, signal_callback_handler);
-
-        // Initialize socket.
-        server_socket_ = socket(PF_INET, SOCK_STREAM, 0);  // PF_INET: IPv4, SOCK_STREAM: TCP/IP. //M
-        int socket_option = 1; // SO_REUSEADDR == true. TIME-WAIT refusal.
-        setsockopt(server_socket_, SOL_SOCKET, SO_REUSEADDR, &socket_option, sizeof(socket_option));
-
-        if( -1 == server_socket_){
-            cout << "Generation of a server socket fails...\n";
-            exit(1);
-        } else cout << "Server socket is generated!\n";
-    
-        memset(&server_addr_, 0, sizeof(server_addr_));
-        server_addr_.sin_family      = AF_INET;
-        server_addr_.sin_port        = htons(PORT_NUMBER); // port number . 
-        server_addr_.sin_addr.s_addr = htonl(INADDR_ANY);
-        
-        if(-1 == bind(server_socket_, (struct sockaddr*)&server_addr_, sizeof(server_addr_))){
-            printf("   ERROR: Fail to bind!\n");
-            exit(1);
-        } else printf("BIND:   OK\n");
-
-        if(-1 == listen(server_socket_, 5)){ // What is the meaning of '5' ? 
-            // listen is failed. no request.
-            printf("   ERROR: Fail to listen!\n");
-            exit(1);
-        } 
-        else printf("LISTEN: OK\n");
-        
-        // Set non-block server
-        int flag = fcntl(server_socket_, F_GETFL, 0);
-        fcntl(server_socket_, F_SETFL, flag | O_NONBLOCK);
+        openSocket();
     };
 
     TCPCOMM(mutex* m, ros::NodeHandle nh) 
     : m_(m), nh_(nh)
     {
-        signal(SIGINT, signal_callback_handler);
-
-        // Initialize socket.
-        server_socket_ = socket(PF_INET, SOCK_STREAM, 0);  // PF_INET: IPv4, SOCK_STREAM: TCP/IP. //M
-        int socket_option = 1; // SO_REUSEADDR == true. TIME-WAIT refusal.
-        setsockopt(server_socket_, SOL_SOCKET, SO_REUSEADDR, &socket_option, sizeof(socket_option));
-
-        if( -1 == server_socket_){
-            cout << "Generation of a server socket fails...\n";
-            exit(1);
-        } else cout << "Server socket is generated!\n";
-    
-        memset(&server_addr_, 0, sizeof(server_addr_));
-        server_addr_.sin_family      = AF_INET;
-        server_addr_.sin_port        = htons(PORT_NUMBER); // port number . 
-        server_addr_.sin_addr.s_addr = htonl(INADDR_ANY);
+        openSocket();
         
-        if(-1 == bind(server_socket_, (struct sockaddr*)&server_addr_, sizeof(server_addr_))){
-            printf("   ERROR: Fail to bind!\n");
-            exit(1);
-        } else printf("BIND:   OK\n");
-
-        if(-1 == listen(server_socket_, 5)){ // What is the meaning of '5' ? 
-            // listen is failed. no request.
-            printf("   ERROR: Fail to listen!\n");
-            exit(1);
-        } 
-        else printf("LISTEN: OK\n");
-        
-        // Set non-block server
-        int flag = fcntl(server_socket_, F_GETFL, 0);
-        fcntl(server_socket_, F_SETFL, flag | O_NONBLOCK);
-
         // ROS
         msg_wheel_encoders_.data.push_back(0);
         msg_wheel_encoders_.data.push_back(0);
         msgs_sonars_.push_back(sensor_msgs::Range());
         msgs_sonars_.push_back(sensor_msgs::Range());
         msgs_sonars_.push_back(sensor_msgs::Range());
-        this->pub_wheel_encoders_ = nh_.advertise<std_msgs::Float32MultiArray>("/ugv/wheel_current", 1);
-        this->pub_imu_            = nh_.advertise<sensor_msgs::Imu>("/ugv/imu", 1);
-        this->pubs_sonars_.push_back(nh_.advertise<sensor_msgs::Range>("/ugv/sonar0", 1));
-        this->pubs_sonars_.push_back(nh_.advertise<sensor_msgs::Range>("/ugv/sonar1", 1));
-        this->pubs_sonars_.push_back(nh_.advertise<sensor_msgs::Range>("/ugv/sonar2", 1));
+        this->pub_wheel_encoders_ = nh_.advertise<std_msgs::Float32MultiArray>("/larr_ugv/wheel_current", 1);
+        this->pub_imu_            = nh_.advertise<sensor_msgs::Imu>("/larr_ugv/imu", 1);
+        this->pubs_sonars_.push_back(nh_.advertise<sensor_msgs::Range>("/larr_ugv/sonar0", 1));
+        this->pubs_sonars_.push_back(nh_.advertise<sensor_msgs::Range>("/larr_ugv/sonar1", 1));
+        this->pubs_sonars_.push_back(nh_.advertise<sensor_msgs::Range>("/larr_ugv/sonar2", 1));
 
     };
 
@@ -159,7 +89,7 @@ public:
     };
 
     void process(){
-        FLOAT_UNION kp,kd,ki;
+        datatype::FLOAT_UNION kp,kd,ki;
         w_left_desired_.float_  = 0.0f;
         w_right_desired_.float_ = 0.0f;
         kp.float_ = 1.1;//1.5;
@@ -246,7 +176,7 @@ public:
     };
 
     void processROS(){
-        FLOAT_UNION kp,kd,ki;
+        datatype::FLOAT_UNION kp,kd,ki;
         w_left_desired_.float_  = 0.0f;
         w_right_desired_.float_ = 0.0f;
         kp.float_ = 1.1;//1.5;
@@ -414,6 +344,41 @@ private:
         sonar_dist[2] = decode2BytesToShort(buff[31],buff[32])/256;
     };
 
+    void openSocket(){
+        signal(SIGINT, signal_callback_handler);
+
+        // Initialize socket.
+        server_socket_ = socket(PF_INET, SOCK_STREAM, 0);  // PF_INET: IPv4, SOCK_STREAM: TCP/IP. //M
+        int socket_option = 1; // SO_REUSEADDR == true. TIME-WAIT refusal.
+        setsockopt(server_socket_, SOL_SOCKET, SO_REUSEADDR, &socket_option, sizeof(socket_option));
+
+        if( -1 == server_socket_){
+            cout << "Generation of a server socket fails...\n";
+            exit(1);
+        } else cout << "Server socket is generated!\n";
+    
+        memset(&server_addr_, 0, sizeof(server_addr_));
+        server_addr_.sin_family      = AF_INET;
+        server_addr_.sin_port        = htons(PORT_NUMBER); // port number . 
+        server_addr_.sin_addr.s_addr = htonl(INADDR_ANY);
+        
+        if(-1 == bind(server_socket_, (struct sockaddr*)&server_addr_, sizeof(server_addr_))){
+            printf("   ERROR: Fail to bind!\n");
+            exit(1);
+        } else printf("BIND:   OK\n");
+
+        if(-1 == listen(server_socket_, 5)){ // What is the meaning of '5' ? 
+            // listen is failed. no request.
+            printf("   ERROR: Fail to listen!\n");
+            exit(1);
+        } 
+        else printf("LISTEN: OK\n");
+        
+        // Set non-block server
+        int flag = fcntl(server_socket_, F_GETFL, 0);
+        fcntl(server_socket_, F_SETFL, flag | O_NONBLOCK);
+    };
+
 
 private:
 
@@ -433,19 +398,19 @@ private:
     double time_mcu_; 
     double time_mcu_prev_; 
     short  data_imu_[6];
-    FLOAT_UNION w_left_;
-    FLOAT_UNION w_right_;
-
-    FLOAT_UNION w_left_desired_;
-    FLOAT_UNION w_right_desired_;
 
     unsigned short sonar_dist[3];
+
+    datatype::FLOAT_UNION w_left_;
+    datatype::FLOAT_UNION w_right_;
+
+    datatype::FLOAT_UNION w_left_desired_;
+    datatype::FLOAT_UNION w_right_desired_;
 
     // Data to the MCU
 
     // Pointer to the main mutex
     std::mutex* m_; 
-
 
     // ROS related
     ros::NodeHandle nh_;

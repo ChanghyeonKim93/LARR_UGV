@@ -1,0 +1,29 @@
+1. Clone this project to your catkin's workspace src folder
+
+$ cd ~/catkin_ws/src
+$ git clone https://github.com/YDLIDAR/ydlidar_ros
+$ cd ydlidar_ros
+$ git checkout master
+
+
+2. Copy files.
+'ydlidar_node_larrugv.cpp' to '~/catkin_ws/src/ydlidar_ros/src'
+'CMakeLists.txt' to '~/catkin_ws/src/ydlidar_ros'
+
+$ cd ~/catkin_ws/src/LARR_UGV/external
+$ cp -r CMakeLists.txt ~/catkin_ws/src/ydlidar_ros
+$ cp -r ydlidar_node_larrugv.cpp ~/catkin_ws/src/ydlidar_ros/src
+
+3. Build ROS node
+$ cd ~/catkin_ws
+$ catkin_make --only-pkg-with-deps ydlidar_ros
+
+
+4. Create the name "/dev/ydlidar" for YDLIDAR 
+(This step sets the udev-rule. Actually, this is not required in our setting.)
+
+$ roscd ydlidar_ros/startup
+$ sudo chmod 777 ./*
+$ sudo sh initenv.sh
+
+
