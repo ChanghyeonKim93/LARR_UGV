@@ -58,10 +58,10 @@
 
 
   <node pkg="tf" type="static_transform_publisher" name="rgbd_left_star_to_rgbd_left"
-    args="0.0 0.0 0.0 1.57 1.57 0.0 /d435_left_depth_frame_star /d435_left_depth_frame 20" />
+    args="0.0 0.0 0.0 0.0 0.0 0.0 /d435_left_depth_frame_star /d435_left_aligned_depth_to_color_frame 20" />
 
   <node pkg="tf" type="static_transform_publisher" name="rgbd_right_star_to_rgbd_right"
-    args="0.0 0.0 0.0 1.57 1.57 0.0 /d435_right_depth_frame_star /d435_right_depth_frame 20" />
+    args="0.0 0.0 0.0 0.0 0.0 0.0 /d435_right_depth_frame_star /d435_right_aligned_depth_to_color_frame 20" />
 
 
 </launch>

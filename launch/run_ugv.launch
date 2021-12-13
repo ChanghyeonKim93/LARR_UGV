@@ -54,10 +54,10 @@
   </node>
 
   <node pkg="tf" type="static_transform_publisher" name="base_to_laser_left"
-    args="0.165  0.175 0.09 0.0 0.0 3.14 /base /left/2dlidar 20" />
+    args="0.165  0.175 0.09 0.0 0.0 3.141592 /base /left/2dlidar 20" />
 
   <node pkg="tf" type="static_transform_publisher" name="base_to_laser_right"
-    args="0.165 -0.175 0.09 0.0 0.0 3.14 /base /right/2dlidar 20" />
+    args="0.165 -0.175 0.09 0.0 0.0 3.141592 /base /right/2dlidar 20" />
 
   <include file="$(find realsense2_camera)/launch/larr_ugv_cameras.launch">
     <arg name="serial_no_camera1"    			default="134222076907"/> <!-- Left -->
