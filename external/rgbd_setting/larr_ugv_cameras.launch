@@ -5,22 +5,31 @@
   <arg name="camera2"              	default="d435_right"/>
   <arg name="tf_prefix_camera1"         default="$(arg camera1)"/>
   <arg name="tf_prefix_camera2"         default="$(arg camera2)"/>
+  <arg name="tf_base"                   default="base"/>
   <arg name="initial_reset"             default="false"/>
   <arg name="reconnect_timeout"         default="6.0"/>
 
-  <arg name="enable_pointcloud"   default="false"/>
+  <arg name="enable_pointcloud"   default="true"/>
   <arg name="enable_sync"         default="true"/>
   <arg name="align_depth"         default="true"/>
+
+  <arg name="depth_fps"           default="10"/>
+  <arg name="infra_fps"           default="10"/>
+  <arg name="color_fps"           default="10"/>
 
   <group ns="$(arg camera1)">
     <include file="$(find realsense2_camera)/launch/includes/nodelet.launch.xml">
       <arg name="serial_no"             value="$(arg serial_no_camera1)"/>
-      <arg name="tf_prefix"        	value="$(arg tf_prefix_camera1)"/>
+      <arg name="tf_prefix"        	value="$(arg tf_prefix_camera1)"/>      
+      <arg name="base_frame_id"        	value="$(arg tf_base)"/>
       <arg name="initial_reset"         value="$(arg initial_reset)"/>
       <arg name="reconnect_timeout"     value="$(arg reconnect_timeout)"/>
       <arg name="enable_pointcloud"        value="$(arg enable_pointcloud)"/>
       <arg name="enable_sync"              value="$(arg enable_sync)"/>
       <arg name="align_depth"              value="$(arg align_depth)"/>
+      <arg name="depth_fps"              value="$(arg depth_fps)"/>
+      <arg name="infra_fps"              value="$(arg infra_fps)"/>
+      <arg name="color_fps"              value="$(arg color_fps)"/>
     </include>
   </group>
 
@@ -28,12 +37,31 @@
     <include file="$(find realsense2_camera)/launch/includes/nodelet.launch.xml">
       <arg name="serial_no"             value="$(arg serial_no_camera2)"/>
       <arg name="tf_prefix"		value="$(arg tf_prefix_camera2)"/>
+      <arg name="base_frame_id"        	value="$(arg tf_base)"/>
       <arg name="initial_reset"         value="$(arg initial_reset)"/>
       <arg name="reconnect_timeout"     value="$(arg reconnect_timeout)"/>
       <arg name="enable_pointcloud"        value="$(arg enable_pointcloud)"/>
       <arg name="enable_sync"              value="$(arg enable_sync)"/>
       <arg name="align_depth"              value="$(arg align_depth)"/>
+      <arg name="depth_fps"              value="$(arg depth_fps)"/>
+      <arg name="infra_fps"              value="$(arg infra_fps)"/>
+      <arg name="color_fps"              value="$(arg color_fps)"/>
     </include>
   </group>
+
+  <!-- yawing 15 degrees, upper 30 degrees -->
+  <node pkg="tf" type="static_transform_publisher" name="base_to_rgbd_left_star"
+    args="0.200 0.174 0.176 0.261829 -0.5235986667 0.0 /base /d435_left_depth_frame_star 20" />
+
+  <node pkg="tf" type="static_transform_publisher" name="base_to_rgbd_right_star"
+    args="0.200 -0.174 0.176 -0.261829 -0.5235986667 0.0 /base /d435_right_depth_frame_star 20" />
+
+
+  <node pkg="tf" type="static_transform_publisher" name="rgbd_left_star_to_rgbd_left"
+    args="0.0 0.0 0.0 1.57 1.57 0.0 /d435_left_depth_frame_star /d435_left_depth_frame 20" />
+
+  <node pkg="tf" type="static_transform_publisher" name="rgbd_right_star_to_rgbd_right"
+    args="0.0 0.0 0.0 1.57 1.57 0.0 /d435_right_depth_frame_star /d435_right_depth_frame 20" />
+
 
 </launch>
