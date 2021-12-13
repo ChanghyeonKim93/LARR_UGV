@@ -4,7 +4,7 @@ link for Linux : https://github.com/IntelRealSense/librealsense/blob/master/doc/
 
 * please install '*-dkms, *-utils, *-dev, *-dbg'
 
-1-1) Register the server's public key:
+1-1) Register the server's public key: (It requires several tens of seconds...)
 $ sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-key F6E65AC044F831AC80A06380C8B3A55A6F3EFCDE || sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-key F6E65AC044F831AC80A06380C8B3A55A6F3EFCDE
 
 1-2) Add the server to the list of repositories:
@@ -34,6 +34,11 @@ $ source ~/.bashrc
 
 
 3. Copy the test launch file (just for testing both D435i working well.)
-$ cd ~/catkin_ws/src/LARR_UGV/external/rgbd
-$ cp -r larr_ugv_cameras.launch /~catkin_ws/src/realsense_ros/realsense2_camera/launch
+$ cd ~/catkin_ws/src/LARR_UGV/external/rgbd_setting
+$ cp -r larr_ugv_cameras.launch ~/catkin_ws/src/realsense-ros/realsense2_camera/launch
 
+
+4. Build the node
+$ cd ~/catkin_ws
+$ source devel/setup.bash
+$ catkin_make --only-pkg-with-deps realsense2_camera

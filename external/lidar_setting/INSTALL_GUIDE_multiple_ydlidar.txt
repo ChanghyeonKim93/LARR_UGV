@@ -10,7 +10,7 @@ $ git checkout master
 'ydlidar_node_larrugv.cpp' to '~/catkin_ws/src/ydlidar_ros/src'
 'CMakeLists.txt' to '~/catkin_ws/src/ydlidar_ros'
 
-$ cd ~/catkin_ws/src/LARR_UGV/external
+$ cd ~/catkin_ws/src/LARR_UGV/external/lidar_setting
 $ cp -r CMakeLists.txt ~/catkin_ws/src/ydlidar_ros
 $ cp -r ydlidar_node_larrugv.cpp ~/catkin_ws/src/ydlidar_ros/src
 
