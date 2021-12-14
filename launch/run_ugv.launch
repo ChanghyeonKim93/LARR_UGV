@@ -65,5 +65,18 @@
     <arg name="camera1"              			default="d435_left"/>
     <arg name="camera2"              			default="d435_right"/>
   </include>
+
+  <include file="$(find bluefox)/launch/larr_ugv.launch">
+    <arg name="binning_on" default="false"/>
+    <arg name="triggered_on" default="true"/>
+    <arg name="auto_exposure_control" default="false"/>
+    <arg name="auto_gain_control" default="false"/>
+    <arg name="high_dynamic_range_on" default="false"/>
+    <arg name="expose_us" default="10000"/>
+
+    <arg name="serial0" default="25003728"/>
+    <arg name="serial1" default="25001575"/>
+    <arg name="serial2" default="25003716"/>
+  </include>
 </group>
 </launch>

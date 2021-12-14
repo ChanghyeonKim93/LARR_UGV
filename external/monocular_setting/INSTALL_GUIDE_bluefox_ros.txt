@@ -1,0 +1,28 @@
+Cameras : 3 x Matrix Vision GmbH. mvBlueFOX-MLC200wG 
+
+
+1. Download mvIMPACT acquire linux
+link: https://www.matrix-vision.com/en/downloads/drivers-software
+--> mvBlueFOX (USB 2.0) --> linux 2.6 .. 5.x.x 
+--> download 'install_mvBlueFOX' & 'mvBlueFOX-x86_64_ABI2-2.45.0'
+
+
+2. In the download folder, do below to install the driver:
+
+$ cd ~/Downloads
+$ sudo chmod 777 install_mvBlueFOX.sh
+$ sudo ./install_mvBlueFOX.sh
+
+
+3. Clone bluefox ROS implementation (mine!)
+link: https://github.com/ChanghyeonKim93/bluefox_ros
+
+$ cd ~/catkin_ws/src
+$ git clone "https://github.com/ChanghyeonKim93/bluefox_ros"
+$ cd ~/catkin_ws
+$ catkin_make --only-pkg-with-deps bluefox
+
+
+4. Run launch file
+$ roslaunch bluefox larr_ugv.launch
+--> This command will run three nodes of mvBlueFox cameras.

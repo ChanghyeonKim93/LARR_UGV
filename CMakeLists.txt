@@ -33,7 +33,7 @@ include_directories( ${catkin_INCLUDE_DIRS} )
 include_directories( ${Eigen_INCLUDE_DIRS} )
 include_directories( ${Boost_INCLUDE_DIRS} )
 
-set(DCMAKE_build_type debug)
+set(DCMAKE_build_type release)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -pg -O2 -m64 -Ofast -flto -msse3 -march=native -mfpmath=sse")
 
 add_executable (test_tcp_server src/test_tcp_server.cpp)
