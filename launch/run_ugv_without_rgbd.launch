@@ -1,0 +1,75 @@
+<launch>
+  <arg name="serial_left"  default="2021062700060251"/>
+  <arg name="serial_right" default="2021062800060008"/>
+  <arg name="frame_id_left"  default="left/2dlidar"/>
+  <arg name="frame_id_right" default="right/2dlidar"/>
+
+<!--node type="rviz" name="rviz" pkg="rviz" args="-d $(find larr_ugv)/rviz_larrugv.rviz" /-->
+
+<group ns="larr_ugv">
+  <node pkg="larr_ugv" type="tcp_server" name="tcp_server" output="screen">
+  
+  </node>
+       
+  <node name="ydlidar_node_larrugv1"  pkg="ydlidar_ros"  type="ydlidar_node_larrugv" output="screen" respawn="false" >
+    <param name="port"         type="string" value="/dev/ttyUSB0"/>  
+    <param name="baudrate"     type="int" value="230400"/>  
+    <param name="frame_id"     type="string" value="laser_frame"/>
+    <param name="resolution_fixed"    type="bool"   value="true"/>
+    <param name="auto_reconnect"    type="bool"   value="true"/>
+    <param name="reversion"    type="bool"   value="true"/>
+    <param name="angle_min"    type="double" value="-180" />
+    <param name="angle_max"    type="double" value="180" />
+    <param name="range_min"    type="double" value="0.2" />
+    <param name="range_max"    type="double" value="12.0" />
+    <param name="ignore_array" type="string" value="" />
+    <param name="frequency"    type="double" value="20"/>
+    <param name="isTOFLidar"   type="bool"   value="false"/>
+
+    <param name="serial_left"  type="string" value="$(arg serial_left)"/>
+    <param name="serial_right" type="string" value="$(arg serial_right)"/>
+    <param name="frame_id_left"  type="string" value="$(arg frame_id_left)"/>
+    <param name="frame_id_right" type="string" value="$(arg frame_id_right)"/>
+  </node>
+
+  <node name="ydlidar_node_larrugv2"  pkg="ydlidar_ros"  type="ydlidar_node_larrugv" output="screen" respawn="false" >
+    <param name="port"         type="string" value="/dev/ttyUSB1"/>  
+    <param name="baudrate"     type="int" value="230400"/>  
+    <param name="frame_id"     type="string" value="laser_frame"/>
+    <param name="resolution_fixed"    type="bool"   value="true"/>
+    <param name="auto_reconnect"    type="bool"   value="true"/>
+    <param name="reversion"    type="bool"   value="true"/>
+    <param name="angle_min"    type="double" value="-180" />
+    <param name="angle_max"    type="double" value="180" />
+    <param name="range_min"    type="double" value="0.2" />
+    <param name="range_max"    type="double" value="12.0" />
+    <param name="ignore_array" type="string" value="" />
+    <param name="frequency"    type="double" value="20"/>
+    <param name="isTOFLidar"   type="bool"   value="false"/>
+
+    <param name="serial_left"  type="string" value="$(arg serial_left)"/>
+    <param name="serial_right" type="string" value="$(arg serial_right)"/>
+    <param name="frame_id_left"  type="string" value="$(arg frame_id_left)"/>
+    <param name="frame_id_right" type="string" value="$(arg frame_id_right)"/>
+  </node>
+
+  <node pkg="tf" type="static_transform_publisher" name="base_to_laser_left"
+    args="0.165  0.175 0.09 0.0 0.0 3.141592 /base /left/2dlidar 20" />
+
+  <node pkg="tf" type="static_transform_publisher" name="base_to_laser_right"
+    args="0.165 -0.175 0.09 0.0 0.0 3.141592 /base /right/2dlidar 20" />
+
+  <include file="$(find bluefox)/launch/larr_ugv.launch">
+    <arg name="binning_on" default="false"/>
+    <arg name="triggered_on" default="true"/>
+    <arg name="auto_exposure_control" default="false"/>
+    <arg name="auto_gain_control" default="false"/>
+    <arg name="high_dynamic_range_on" default="false"/>
+    <arg name="expose_us" default="10000"/>
+
+    <arg name="serial0" default="25003728"/>
+    <arg name="serial1" default="25001575"/>
+    <arg name="serial2" default="25003716"/>
+  </include>
+</group>
+</launch>

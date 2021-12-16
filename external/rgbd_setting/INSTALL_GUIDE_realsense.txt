@@ -38,7 +38,60 @@ $ cd ~/catkin_ws/src/LARR_UGV/external/rgbd_setting
 $ cp -r larr_ugv_cameras.launch ~/catkin_ws/src/realsense-ros/realsense2_camera/launch
 
 
+4. Replace 'base_realsense_node.cpp' file in the '~/catkin_ws/src/realsense-ros/realsense2_camera/src/base_realsense_node.cpp'
+$ cp -r base_realsense_node.cpp ~/catkin_ws/src/realsense-ros/realsense2_camera/src
+
 4. Build the node
 $ cd ~/catkin_ws
 $ source devel/setup.bash
 $ catkin_make --only-pkg-with-deps realsense2_camera
+
+
+# Information
+1) External trigger setting
+ The realsense cameras (D435, D435i, D455) support 'Inter Cam Sync Mode'. You can see the details in "https://support.intelrealsense.com/hc/en-us/community/posts/4407190249875-Sync-D435i-and-D455-in-ROS". The trigger signal must be over 100 us width HIGH digital input to the pin 5. 
+ Inter Cam Sync Mode 1 and 2 only support "depth timestamp sync". Intel released an External Synchronization paper (in the link below) that introduced Inter Cam Sync Mode '3' (Full Slave), which also synchronizes the color camera.
+
+
+# troubleshooting
+- symbol lookup error: /usr/local/lib/librealsense2.so.2.33: undefined symbol: libusb_get_port_numbers
+
+$ realsense-viewer
+: symbol lookup error: /usr/local/lib/librealsense2.so.2.33: undefined symbol: libusb_get_port_numbers
+
+You can type 'ldd /usr/bin/realsense-viewer | grep libusb' in cmd and find it:
+libusb-1.0.so.0 => /opt/mvIMPACT_Acquire/lib/x86_64/libusb-1.0.so.0 (0x00007f3f4aac6000)
+
+This problem is from the mvIMPACT setting. Do below:
+$ sudo rm /opt/mvIMPACT_Acquire/lib/x86_64/libusb-1.0.so.0
+
+
+
+
+libusb
+
+Bluefox driver comes with libusb that is missing some important functions. As a result, realsense won't be able to launch if bluefox camera driver is installed.
+
+Solution:
+
+Remove the conflicting libusb acquired during bluefox installation.
+
+rm /opt/mvIMPACT_acquire/lib/x86_64/libusb-1.0.so.0.0.0
+
+udev rules reloading problem
+
+Check if you have correct prime-select, if you haven't connected the doc station it should be intel ( depends on your system ), to check use
+
+sudo prime-select query
+
+To select use
+
+sudo prime-select intel
+
+Realsense enumerated as USB 2.0 device
+
+Plugging the USB 3.0 original cable slowly into the USB port of the host causes it to be enumerated as USB 2.0 device. The current USB mode can be checked by lsusb -t - 5000M is USB 3.0, 480M is USB 2.0. Enumerating Realsense D435 as USB 2.0 devices causes some image streams to be unavailable.
+
+Solution:
+
+Insert the cable quickly to the USB port.
