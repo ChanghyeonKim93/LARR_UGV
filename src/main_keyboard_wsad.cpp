@@ -28,6 +28,9 @@ int main(int argc, char **argv) {
     << "\n|    s: -velocity" 
     << "\n|    a: left turn"
     << "\n|    d: right turn" 
+
+    << "\n|    a: left turn"
+    << "\n|    d: right turn" 
     << "\n| Select an input: \n";
     user_manual = ss.str();
     cout << user_manual;
@@ -92,15 +95,48 @@ int main(int argc, char **argv) {
             if(w_d <= W_MIN) w_d = W_MIN;
             cout << user_manual;         
         }
-        else if(c == 'q') break;
+
+        else if(c == 'q')
+	    {        
+            v_d += v_step;   
+            w_d -= w_step;
+            if(v_d >= V_MAX) v_d = V_MAX;
+            if(w_d <= W_MIN) w_d = W_MIN;
+            cout << user_manual;         
+        }
+        else if(c == 'e')
+	    {        
+            v_d += v_step;   
+            w_d += w_step;
+            if(v_d >= V_MAX) v_d = V_MAX;
+            if(w_d >= W_MAX) w_d = W_MAX;
+            cout << user_manual;         
+        }
+        else if(c == 'z')
+	    {        
+            v_d -= v_step;   
+            w_d += w_step;
+            if(v_d <= V_MIN) v_d = V_MIN;
+            if(w_d >= W_MAX) w_d = W_MAX;
+            cout << user_manual;         
+        }
+        else if(c == 'c')
+	    {        
+            v_d -= v_step;   
+            w_d -= w_step;
+            if(v_d <= V_MIN) v_d = V_MIN;
+            if(w_d <= W_MIN) w_d = W_MIN;
+
+            cout << user_manual;         
+        }
         else {
             // deccelerate
             float v_abs = fabs(v_d);
-            v_abs -= 1.2*v_step;
+            v_abs -= 0.7*v_step;
             v_d = v_abs*((v_d > 0) - (v_d < 0));
 
             float w_abs = fabs(w_d);
-            w_abs -= 1.2*w_step;
+            w_abs -= 0.7*w_step;
             w_d = w_abs*((w_d > 0) - (w_d < 0));
 
             if(fabs(v_d) < 1.5*v_step) v_d = 0;
