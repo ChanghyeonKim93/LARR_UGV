@@ -51,10 +51,10 @@
 
   <!-- yawing 15 degrees, upper 30 degrees -->
   <node pkg="tf" type="static_transform_publisher" name="base_to_rgbd_left_star"
-    args="0.200 0.174 0.176 0.261829 -0.5235986667 0.0 /base /d435_left_depth_frame_star 20" />
+    args="0.200 0.172 0.176 0.261829 -0.5235986667 0.0 /base /d435_left_depth_frame_star 20" />
 
   <node pkg="tf" type="static_transform_publisher" name="base_to_rgbd_right_star"
-    args="0.200 -0.174 0.176 -0.261829 -0.5235986667 0.0 /base /d435_right_depth_frame_star 20" />
+    args="0.200 -0.172 0.176 -0.261829 -0.5235986667 0.0 /base /d435_right_depth_frame_star 20" />
 
 
   <node pkg="tf" type="static_transform_publisher" name="rgbd_left_star_to_rgbd_left"

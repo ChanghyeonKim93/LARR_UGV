@@ -45,6 +45,9 @@ target_link_libraries (tcp_server ${LINK_LIBS})
 add_executable (keyboard_command src/main_keyboard_command.cpp)
 target_link_libraries (keyboard_command ${LINK_LIBS})
 
+add_executable (keyboard_wasd src/main_keyboard_wsad.cpp)
+target_link_libraries (keyboard_wasd ${LINK_LIBS})
+
 #add_executable (tcpip_client ${SRC_client})
 #target_link_libraries (tcpip_client ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${Eigen_LIBRARIES})
 
